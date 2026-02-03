@@ -103,3 +103,6 @@ steps:
 substitutions:
   _IMAGE_NAME: 'elevate360-leads'
   _SERVICE_NAME: 'elevate360-service'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
