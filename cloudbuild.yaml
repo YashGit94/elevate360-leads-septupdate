@@ -205,23 +205,30 @@ steps:
       - '--region'
       - 'us-central1'
       - '--port'
-      - '8888'
+      - '8080'
       - '--no-allow-unauthenticated'
 
-  # 4. START PROXY WITH ESCAPED SHELL VARIABLE
+  # 4. RUN PROXY VIA TRIGGER
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
+        # Clear existing port to prevent conflicts
+        fuser -k 8080/tcp || true
+        
+        # Install the proxy component (required in Cloud Build environment)
         apt-get update && apt-get install -y google-cloud-cli-cloud-run-proxy
-        # Use $$ to escape the variable from Cloud Build substitution
-        CURRENT_TOKEN=$$(gcloud auth print-identity-token)
-        gcloud beta run services proxy ${_SERVICE_NAME} --region=us-central1 --port=8888 --token=$$CURRENT_TOKEN & 
+        
+        # Fetch token and launch proxy for the manually settled URL
+        TOKEN=$$(gcloud auth print-identity-token)
+        gcloud beta run services proxy ${_SERVICE_NAME} --region=us-central1 --port=8080 --token=$$TOKEN &
+        
+        # Keep build alive briefly to ensure proxy stabilizes
         sleep 20
 
 substitutions:
-  _IMAGE_NAME: 'assessment-platform'
+  _IMAGE_NAME: 'elevate360-leads'
   _SERVICE_NAME: 'elevate360-service'
 
 options:
