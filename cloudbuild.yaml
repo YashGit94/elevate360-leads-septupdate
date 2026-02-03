@@ -184,7 +184,6 @@
 # options:
 #   logging: CLOUD_LOGGING_ONLY
 
-
 steps:
   # 1. Build the Docker image
   - name: 'gcr.io/cloud-builders/docker'
@@ -209,17 +208,16 @@ steps:
       - '8888'
       - '--no-allow-unauthenticated'
 
-  # 4. START PROXY WITH EXPLICIT TOKEN
+  # 4. START PROXY WITH ESCAPED SHELL VARIABLE
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
         apt-get update && apt-get install -y google-cloud-cli-cloud-run-proxy
-        # Manually fetch the identity token for the target service
-        TOKEN=$(gcloud auth print-identity-token)
-        # Launch the proxy using the settled port 8888
-        gcloud beta run services proxy ${_SERVICE_NAME} --region=us-central1 --port=8888 --token=$TOKEN & 
+        # Use $$ to escape the variable from Cloud Build substitution
+        CURRENT_TOKEN=$$(gcloud auth print-identity-token)
+        gcloud beta run services proxy ${_SERVICE_NAME} --region=us-central1 --port=8888 --token=$$CURRENT_TOKEN & 
         sleep 20
 
 substitutions:
