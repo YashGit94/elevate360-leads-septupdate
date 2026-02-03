@@ -209,19 +209,22 @@ steps:
       - '8888'
       - '--no-allow-unauthenticated'
 
-  # 4. INSTALL COMPONENT AND START PROXY
+  # 4. START PROXY WITH EXPLICIT TOKEN
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
         apt-get update && apt-get install -y google-cloud-cli-cloud-run-proxy
-        gcloud beta run services proxy ${_SERVICE_NAME} --region=us-central1 --port=8888 & 
-        sleep 15
+        # Manually fetch the identity token for the target service
+        TOKEN=$(gcloud auth print-identity-token)
+        # Launch the proxy using the settled port 8888
+        gcloud beta run services proxy ${_SERVICE_NAME} --region=us-central1 --port=8888 --token=$TOKEN & 
+        sleep 20
 
 substitutions:
-   _IMAGE_NAME: 'elevate360-leads'
-   _SERVICE_NAME: 'elevate360-service'
+  _IMAGE_NAME: 'assessment-platform'
+  _SERVICE_NAME: 'elevate360-service'
 
 options:
   logging: CLOUD_LOGGING_ONLY
