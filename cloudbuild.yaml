@@ -222,7 +222,7 @@ steps:
         
         # Fetch token and launch proxy for the manually settled URL
         TOKEN=$$(gcloud auth print-identity-token)
-        gcloud beta run services proxy ${_SERVICE_NAME} --region=us-central1 --port=8080 --token=$$TOKEN &
+        gcloud beta run services proxy ${_SERVICE_NAME} --region=us-central1 --port=8888 --token=$$TOKEN &
         
         # Keep build alive briefly to ensure proxy stabilizes
         sleep 20
