@@ -144,6 +144,47 @@
 
 
 
+# steps:
+#   # 1. Build the Docker image
+#   - name: 'gcr.io/cloud-builders/docker'
+#     args: ['build', '-t', 'gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$COMMIT_SHA', '.']
+
+#   # 2. Push to Container Registry
+#   - name: 'gcr.io/cloud-builders/docker'
+#     args: ['push', 'gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$COMMIT_SHA']
+
+#   # 3. Deploy to Cloud Run
+#   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+#     entrypoint: gcloud
+#     args:
+#       - 'run'
+#       - 'deploy'
+#       - '${_SERVICE_NAME}'
+#       - '--image'
+#       - 'gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$COMMIT_SHA'
+#       - '--region'
+#       - 'us-central1'
+#       - '--port'
+#       - '8888'
+#       - '--no-allow-unauthenticated'
+
+#   # 4. START THE PROXY FROM THE TRIGGER
+#   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+#     entrypoint: 'bash'
+#     args:
+#       - '-c'
+#       - |
+#         gcloud beta run services proxy ${_SERVICE_NAME} --region=us-central1 --port=8888 & 
+#         sleep 10 # Gives the proxy time to initialize before the build step finishes
+
+# substitutions:
+#    _IMAGE_NAME: 'elevate360-leads'
+#    _SERVICE_NAME: 'elevate360-service'
+
+# options:
+#   logging: CLOUD_LOGGING_ONLY
+
+
 steps:
   # 1. Build the Docker image
   - name: 'gcr.io/cloud-builders/docker'
@@ -168,14 +209,15 @@ steps:
       - '8888'
       - '--no-allow-unauthenticated'
 
-  # 4. START THE PROXY FROM THE TRIGGER
+  # 4. INSTALL COMPONENT AND START PROXY
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
+        apt-get update && apt-get install -y google-cloud-cli-cloud-run-proxy
         gcloud beta run services proxy ${_SERVICE_NAME} --region=us-central1 --port=8888 & 
-        sleep 10 # Gives the proxy time to initialize before the build step finishes
+        sleep 15
 
 substitutions:
    _IMAGE_NAME: 'elevate360-leads'
