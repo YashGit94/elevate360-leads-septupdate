@@ -184,6 +184,7 @@
 # options:
 #   logging: CLOUD_LOGGING_ONLY
 
+
 steps:
   # 1. Build the Docker image
   - name: 'gcr.io/cloud-builders/docker'
@@ -208,23 +209,16 @@ steps:
       - '8080'
       - '--no-allow-unauthenticated'
 
-  # 4. RUN PROXY VIA TRIGGER
+  # 4. START PROXY VIA TRIGGER
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
-        # Clear existing port to prevent conflicts
-        fuser -k 8080/tcp || true
-        
-        # Install the proxy component (required in Cloud Build environment)
+        fuser -k 8888/tcp || true
         apt-get update && apt-get install -y google-cloud-cli-cloud-run-proxy
-        
-        # Fetch token and launch proxy for the manually settled URL
         TOKEN=$$(gcloud auth print-identity-token)
         gcloud beta run services proxy ${_SERVICE_NAME} --region=us-central1 --port=8888 --token=$$TOKEN &
-        
-        # Keep build alive briefly to ensure proxy stabilizes
         sleep 20
 
 substitutions:
