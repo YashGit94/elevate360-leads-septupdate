@@ -2,21 +2,24 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
+# Install dependencies first to leverage Docker cache
 COPY package*.json ./
 RUN npm install
 
+# Copy source and build
 COPY . .
 RUN npx ng build --configuration production
 
-# Stage 2: Serve with Nginx
+# Stage 2: Serve the application using Nginx
 FROM nginx:stable-alpine
 
-# Copy built files - based on your angular.json
+# Copy built Angular files from the build stage
+# outputPath "dist/leads" from angular.json maps to /browser in Angular 17+
 COPY --from=build /app/dist/leads/browser /usr/share/nginx/html
 
-# Custom Nginx config to listen on 8080 and support Angular routing
+# Configure Nginx for Cloud Run (port 8080) and Angular routing
 RUN echo 'server { \
-    listen 8080; \
+    listen 8888; \
     location / { \
         root /usr/share/nginx/html; \
         index index.html index.htm; \
@@ -24,6 +27,7 @@ RUN echo 'server { \
     } \
 }' > /etc/nginx/conf.d/default.conf
 
-EXPOSE 8080
+# Match the port you confirmed is working
+EXPOSE 8888
 
 CMD ["nginx", "-g", "daemon off;"]
