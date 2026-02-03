@@ -80,26 +80,21 @@
 # CMD ["nginx", "-g", "daemon off;"]
 
 
-
-# Stage 1: Build
+# Stage 1: Build the Angular application
 FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+# Note: Ensure 'siteview' matches the project name in your angular.json
 RUN npx ng build --configuration production
 
-# Stage 2: Serve
+# Stage 2: Serve the application with Nginx
 FROM nginx:stable-alpine
-
-# This wildcard path ensures we grab index.html regardless of the subfolder
-COPY --from=build /app/dist/leads/browser/ /usr/share/nginx/html/
-
-# Apply the hardened config
+# Copy the build output to the Nginx html folder
+COPY --from=build /app/dist/siteview/browser /usr/share/nginx/html
+# Copy your custom Nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Set permissions to ensure Nginx can read the files
-RUN chmod -R 755 /usr/share/nginx/html
 
 EXPOSE 8888
 CMD ["nginx", "-g", "daemon off;"]
