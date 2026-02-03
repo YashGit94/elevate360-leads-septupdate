@@ -86,14 +86,14 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
-# Note: Ensure 'siteview' matches the project name in your angular.json
+# Builds the project defined in your angular.json
 RUN npx ng build --configuration production
 
 # Stage 2: Serve the application with Nginx
 FROM nginx:stable-alpine
-# Copy the build output to the Nginx html folder
-COPY --from=build /app/dist/siteview/browser /usr/share/nginx/html
-# Copy your custom Nginx configuration
+# Path matches the 'assessment_app' project output
+COPY --from=build /app/dist/assessment_app/browser /usr/share/nginx/html
+# Apply your custom Nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 8888
