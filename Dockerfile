@@ -79,22 +79,25 @@
 # EXPOSE 8888
 # CMD ["nginx", "-g", "daemon off;"]
 
-
-# Stage 1: Build the Angular application
+# Stage 1: Build Angular
 FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
-# Builds the project defined in your angular.json
 RUN npx ng build --configuration production
 
-# Stage 2: Serve the application with Nginx
-FROM nginx:stable-alpine
-# Path matches the 'assessment_app' project output
-COPY --from=build /app/dist/assessment_app/browser /usr/share/nginx/html
-# Apply your custom Nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Stage 2: Run Node.js Server
+FROM node:20-alpine
+WORKDIR /app
+COPY package*.json ./
+# Install only production dependencies (Express, BigQuery, etc.)
+RUN npm install --only=production
+# Copy built Angular files from Stage 1
+COPY --from=build /app/dist/assessment_app /app/dist/assessment_app
+# Copy the backend code and keys
+COPY index.js .
+COPY src/keys.json ./keys.json
 
 EXPOSE 8888
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["node", "index.js"]
