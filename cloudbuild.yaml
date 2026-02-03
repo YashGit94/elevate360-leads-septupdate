@@ -178,7 +178,7 @@
 #         sleep 10 # Gives the proxy time to initialize before the build step finishes
 
 # substitutions:
-#    _IMAGE_NAME: 'elevate360-leads'
+#    _IMAGE_NAME: ''
 #    _SERVICE_NAME: 'elevate360-service'
 
 # options:
@@ -194,7 +194,7 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$COMMIT_SHA']
 
-  # 3. Deploy to Cloud Run
+  # 3. Deploy to Cloud Run on Port 8888
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
@@ -206,10 +206,10 @@ steps:
       - '--region'
       - 'us-central1'
       - '--port'
-      - '8080'
+      - '8888'
       - '--no-allow-unauthenticated'
 
-  # 4. START PROXY VIA TRIGGER
+  # 4. START PROXY VIA TRIGGER ON PORT 8888
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'bash'
     args:
