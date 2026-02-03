@@ -33,6 +33,32 @@
 # CMD ["nginx", "-g", "daemon off;"]
 
 
+# #Working update-2
+# # Stage 1: Build Angular
+# FROM node:20-alpine AS build
+# WORKDIR /app
+# COPY package*.json ./
+# RUN npm install
+# COPY . .
+# RUN npx ng build --configuration production
+
+# # Stage 2: Serve with Nginx
+# FROM nginx:stable-alpine
+# COPY --from=build /app/dist/leads/browser /usr/share/nginx/html
+
+# # Configure Nginx for Port 8888 and Angular Routing
+# RUN echo 'server { \
+#     listen 8888; \
+#     location / { \
+#         root /usr/share/nginx/html; \
+#         index index.html index.htm; \
+#         try_files $uri $uri/ /index.html; \
+#     } \
+# }' > /etc/nginx/conf.d/default.conf
+
+# EXPOSE 8888
+# CMD ["nginx", "-g", "daemon off;"]
+
 
 # Stage 1: Build Angular
 FROM node:20-alpine AS build
@@ -46,15 +72,8 @@ RUN npx ng build --configuration production
 FROM nginx:stable-alpine
 COPY --from=build /app/dist/leads/browser /usr/share/nginx/html
 
-# Configure Nginx for Port 8888 and Angular Routing
-RUN echo 'server { \
-    listen 8888; \
-    location / { \
-        root /usr/share/nginx/html; \
-        index index.html index.htm; \
-        try_files $uri $uri/ /index.html; \
-    } \
-}' > /etc/nginx/conf.d/default.conf
+# COPY YOUR CUSTOM NGINX CONFIG
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 8888
 CMD ["nginx", "-g", "daemon off;"]
