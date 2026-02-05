@@ -80,24 +80,50 @@
 # CMD ["nginx", "-g", "daemon off;"]
 
 # Stage 1: Build Angular
-FROM node:20-alpine AS build
+# FROM node:20-alpine AS build
+# WORKDIR /app
+# COPY package*.json ./
+# RUN npm install
+# COPY . .
+# RUN npx ng build --configuration production
+
+# # Stage 2: Run Node.js Server
+# FROM node:20-alpine
+# WORKDIR /app
+# COPY package*.json ./
+# # Install only production dependencies (Express, BigQuery, etc.)
+# RUN npm install --only=production
+# # Copy built Angular files from Stage 1
+# COPY --from=build /app/dist/assessment_app /app/dist/assessment_app
+# # Copy the backend code and keys
+# COPY index.js .
+# COPY src/keys.json ./keys.json
+
+# EXPOSE 8888
+# CMD ["node", "index.js"]
+
+
+FROM node:lts-alpine AS BUILD
 WORKDIR /app
+
+# 1. Copy and install dependencies first for layer caching
 COPY package*.json ./
-RUN npm install
+RUN npm install --silent
+
+# 2. Copy all application source code
 COPY . .
-RUN npx ng build --configuration production
 
-# Stage 2: Run Node.js Server
-FROM node:20-alpine
-WORKDIR /app
-COPY package*.json ./
-# Install only production dependencies (Express, BigQuery, etc.)
-RUN npm install --only=production
-# Copy built Angular files from Stage 1
-COPY --from=build /app/dist/assessment_app /app/dist/assessment_app
-# Copy the backend code and keys
-COPY index.js .
-COPY src/keys.json ./keys.json
+# 3. Build the Angular application for production
+RUN npm run build -- --configuration=production --base-href=/
 
-EXPOSE 8888
-CMD ["node", "index.js"]
+# --- Stage 2: Production Stage (Uses a tiny Nginx image to serve static files) ---
+FROM nginx:alpine
+
+# 4. Copy the built files from the 'BUILD' stage to Nginx's web root
+COPY --from=BUILD /app/dist/leads/browser /usr/share/nginx/html
+
+# Nginx runs on port 80 by default
+EXPOSE 80
+
+# Command to run Nginx when the container starts
+CMD ["nginx", "-g", "daemon off;"]
